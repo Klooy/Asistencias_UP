@@ -17,7 +17,8 @@ require_once('../utils/conexion.php');
             $insert->bindValue('programa',$user->getPrograma());
             $insert->bindValue('rol',$user->getRol());
             $insert->bindValue('firma',$user->getFirma());
-            $insert->bindValue('clave',$user->getClave());
+			$pass=password_hash($user->getClave(),PASSWORD_DEFAULT);
+            $insert->bindValue('clave',$pass);
 			$insert->execute();
 
 		}
@@ -68,6 +69,44 @@ require_once('../utils/conexion.php');
             $myUser->setFirma($user['firma']);
             $myUser->setClave($user['clave']);
 			return $myUser;
+		}
+
+		//obtiene el usuario para el login
+		public function obtenerUsuarioLogin($cedula, $clave){
+			$db=Db::conectar();
+			$select=$db->prepare('SELECT * FROM usuarios WHERE cedula=:cedula');//AND clave=:clave
+			$select->bindValue('cedula',$cedula);
+			$select->execute();
+			$registro=$select->fetch();
+			$usuario=new User();
+			//verifica si la clave es conrrecta
+			if (password_verify($clave, $registro['clave'])) {			
+				//si es correcta, asigna los valores que trae desde la base de datos
+				$usuario->setId($registro['id']);
+            	$usuario->setNombre($registro['nombre']);
+            	$usuario->setApellido($registro['apellido']);
+            	$usuario->setCedula($registro['cedula']);
+            	$usuario->setPrograma($registro['programa']);
+            	$usuario->setRol($registro['rol']);
+            	$usuario->setFirma($registro['firma']);
+            	$usuario->setClave($registro['clave']);
+			}			
+			return $usuario;
+		}
+
+		//busca el nombre del usuario si existe
+		public function buscarUsuario($cedula){
+			$db=Db::conectar();
+			$select=$db->prepare('SELECT * FROM usuarios WHERE cedula=:cedula');
+			$select->bindValue('cedula',$cedula);
+			$select->execute();
+			$registro=$select->fetch();
+			if($registro['id']!=NULL){
+				$usado=False;
+			}else{
+				$usado=True;
+			}	
+			return $usado;
 		}
 
 		// método para actualizar un usuario, recibe como parámetro el usuario
